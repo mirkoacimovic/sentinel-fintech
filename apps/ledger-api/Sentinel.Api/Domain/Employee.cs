@@ -1,4 +1,11 @@
 ﻿namespace Sentinel.Api.Domain
 {
-    public record Employee(int Id, int DepartmentId, string Name, string LastName, decimal MonthlyPaycheck);
+    public class Employee
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int DepartmentId { get; set; }
+
+        public Department Department { get; set; } = null!;
+    }
 }
