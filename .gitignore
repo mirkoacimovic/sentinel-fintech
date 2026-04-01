@@ -1,0 +1,64 @@
+# --- OS & IDE ---
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
+*.swp
+*.user
+*.suo
+*.userosscache
+*.sln.doccache
+
+# --- .NET 9 ---
+bin/
+obj/
+appsettings.Development.json
+# Keep the main appsettings.json, but ignore secrets if you add them later
+# secrets.json
+
+# --- Python (Processor Engine) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv
+venv/
+ENV/
+env/
+.env
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+
+# --- Next.js (Portal Web) ---
+node_modules/
+.next/
+out/
+.next-env.d.ts
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- Infrastructure & Database ---
+# We want to ignore the binary DB, but KEEP the folder
+infra/db/*.db
+infra/db/*.db-shm
+infra/db/*.db-wal
+!infra/db/.gitkeep
+
+# --- Environment ---
+.env
+.env.local
+.env.production
