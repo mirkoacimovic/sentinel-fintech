@@ -1,24 +1,48 @@
-from fastapi import FastAPI, UploadFile, File
 import pandas as pd
-import io
+import requests
+import json
+from logic.rules import apply_audit_rules
 
-app = FastAPI(title="Sentinel Processor Engine")
+# Configuration
+API_URL = "http://localhost:5122/api/ingest/batch"
+CSV_FILE = "../../test_data.csv"
 
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
+def run_ingestion():
+    try:
+        # 1. Load Data
+        print(f"--- Reading {CSV_FILE} ---")
+        df = pd.read_csv(CSV_FILE)
+        
+        # 2. Map to .NET DTO (Match the C# Record names exactly)
+        # .NET expects: EmployeeName, DepartmentName, CategoryName, Description, Amount, ProcessedAt
+        payload = []
+        for _, row in df.iterrows():
+            payload.append({
+                "EmployeeName": row['EmployeeName'],
+                "DepartmentName": row['Department'],
+                "CategoryName": row['Category'],
+                "Description": row['Description'],
+                "Amount": float(row['Amount']),
+                "ProcessedAt": row['Date']
+            })
 
-@app.post("/ingest")
-async def ingest_csv(file: UploadFile = File(...)):
-    # Read CSV into Pandas
-    contents = await file.read()
-    df = pd.read_csv(io.BytesIO(contents))
-    
-    # Simple conversion to dict for now
-    data = df.to_dict(orient="records")
-    
-    return {
-        "filename": file.filename,
-        "row_count": len(df),
-        "data": data # This is what we will push to .NET
-    }
+        payload = apply_audit_rules(payload)
+            
+        # 3. Fire the Request
+        print(f"--- Sending {len(payload)} records to Ledger ---")
+        response = requests.post(
+            API_URL, 
+            json=payload, 
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code == 201:
+            print("Successfully Ingested to SQLite.")
+        else:
+            print(f"Failed: {response.status_code} - {response.text}")
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+
+if __name__ == "__main__":
+    run_ingestion()

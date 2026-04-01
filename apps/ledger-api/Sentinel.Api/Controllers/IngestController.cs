@@ -15,32 +15,57 @@ public class IngestController(SentinelContext context) : ControllerBase
         if (requests == null || requests.Count == 0)
             return BadRequest("No data provided.");
 
+        // Define our Tenant ID to satisfy the NOT NULL constraint
+        const int tenantId = 1;
+
         foreach (var req in requests)
         {
-            // 1. Department
+            // 1. Ensure Department Exists
             var dept = await context.Departments
                 .FirstOrDefaultAsync(d => d.Name == req.DepartmentName)
-                ?? new Department { Name = req.DepartmentName };
+                ?? new Department
+                {
+                    Name = req.DepartmentName,
+                    CompanyId = tenantId // Added to fix constraint
+                };
 
-            // 2. Category (Make sure this matches your class name: CostCategory)
-            var category = await context.CostCategories
-                .FirstOrDefaultAsync(c => c.Name == req.CategoryName)
-                ?? new CostCategory { Name = req.CategoryName };
+            if (dept.Id == 0) context.Departments.Add(dept);
 
-            // 3. Employee
+            // 2. Ensure Employee Exists
             var employee = await context.Employees
                 .FirstOrDefaultAsync(e => e.Name == req.EmployeeName)
-                ?? new Employee { Name = req.EmployeeName, Department = dept };
+                ?? new Employee
+                {
+                    Name = req.EmployeeName,
+                    Department = dept,
+                    CompanyId = tenantId // Added to fix constraint
+                };
 
-            // 4. Cost
+            if (employee.Id == 0) context.Employees.Add(employee);
+
+            // 3. Ensure Category Exists
+            var category = await context.CostCategories
+                .FirstOrDefaultAsync(c => c.Name == req.CategoryName)
+                ?? new CostCategory
+                {
+                    Name = req.CategoryName,
+                    CompanyId = tenantId // Added to fix constraint
+                };
+
+            if (category.Id == 0) context.CostCategories.Add(category);
+
+            // 4. Create the Cost Record
             var cost = new Cost
             {
                 Description = req.Description,
                 Amount = req.Amount,
                 ProcessedAt = req.ProcessedAt,
                 Employee = employee,
-                Category = category
+                Category = category,
+                CompanyId = tenantId // Added to fix constraint
             };
+
+            context.Costs.Add(cost);
         }
 
         await context.SaveChangesAsync();
@@ -50,7 +75,7 @@ public class IngestController(SentinelContext context) : ControllerBase
 }
 
 // The DTO (Data Transfer Object) for the incoming JSON
-public record CostRequest(
+    public record CostRequest(
     string EmployeeName,
     string DepartmentName,
     string CategoryName,

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sentinel.Api.Persistance;
 
@@ -10,9 +11,11 @@ using Sentinel.Api.Persistance;
 namespace Sentinel.Api.Migrations
 {
     [DbContext(typeof(SentinelContext))]
-    partial class SentinelContextModelSnapshot : ModelSnapshot
+    [Migration("20260401155546_Company Address casing fix")]
+    partial class CompanyAddresscasingfix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");

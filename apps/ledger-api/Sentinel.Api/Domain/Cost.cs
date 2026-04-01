@@ -3,6 +3,7 @@
     public class Cost
     {
         public int Id { get; set; }
+        public int CompanyId { get; set; }
         public string Description { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public DateTime ProcessedAt { get; set; }
