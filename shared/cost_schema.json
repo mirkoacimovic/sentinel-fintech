@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "EmployeeName": { "type": "string" },
+    "DepartmentName": { "type": "string" },
+    "CategoryName": { "type": "string" },
+    "Description": { "type": "string" },
+    "Amount": { "type": "number" },
+    "ProcessedAt": { "type": "string", "format": "date-time" }
+  },
+  "required": ["EmployeeName", "Amount", "ProcessedAt"]
+}

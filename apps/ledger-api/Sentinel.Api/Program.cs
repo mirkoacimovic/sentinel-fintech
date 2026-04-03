@@ -1,33 +1,38 @@
 using Microsoft.EntityFrameworkCore;
 using Sentinel.Api.Domain;
 using Sentinel.Api.Persistance;
+using Sentinel.Api.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Pull the connection string from configuration
+// The 'DefaultConnection' string will now be overridden by the 
+// ConnectionStrings__DefaultConnection env variable in docker-compose.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 2. Register the Context
 builder.Services.AddDbContext<SentinelContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddControllers();
+builder.Services.AddHostedService<AuditConsumer>();
 
 var app = builder.Build();
 
-// Temporary seed logic
+app.MapGet("/", () => "Sentinel Ledger API is Online");
+app.MapControllers();
+
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<SentinelContext>();
-    if (!db.Companies.Any(c => c.Id == 1))
+    var services = scope.ServiceProvider;
+    try
     {
-        db.Companies.Add(new Company { Id = 1, Name = "Sentinel Core", Address = "Firestone Road FE443D" });
-        db.SaveChanges();
+        var context = services.GetRequiredService<SentinelContext>();
+        context.Database.EnsureCreated();
+        Console.WriteLine("--- Database initialized successfully ---");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"--- Database Error: {ex.Message} ---");
     }
 }
 
-// 3. Simple Health Check (Internal testing)
-app.MapGet("/", () => "Sentinel Ledger API is Online");
-
-app.MapControllers();
 app.Run();

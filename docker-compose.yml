@@ -1,0 +1,53 @@
+services:
+  # 1. The .NET 9 Persistence Layer (Now acting as a Consumer)
+  ledger-api:
+    build:
+      context: ./apps/ledger-api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TENANT_ID=${TENANT_ID}
+      - ConnectionStrings__DefaultConnection=Data Source=/app/${DATABASE_PATH}
+      - RabbitMQ__Host=${RABBITMQ_HOST}
+      - RabbitMQ__Queue=${RABBITMQ_QUEUE}
+    depends_on:
+      - rabbitmq
+
+  processor-engine:
+    build:
+      context: ./apps/processor-engine
+      dockerfile: Dockerfile
+    volumes:
+      # Change this to a directory mount
+      - ./data:/app/data
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
+      - TENANT_ID=${TENANT_ID}
+      - DATA_PATH=/app/data # Add this so Python knows where to look
+    depends_on:
+      - rabbitmq
+
+  # 3. The Web Portal
+  sentinel-web:
+    build:
+      context: ./apps/portal-web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ledger-api
+    environment:
+      - API_URL=http://ledger-api:5000
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
+  # 4. The Message Broker (The "Magic Keyword" for Codonix)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: sentinel-mq
+    ports:
+      - "5672:5672" # RabbitMQ Port
+      - "15672:15672" # Management UI (Login: guest/guest)
